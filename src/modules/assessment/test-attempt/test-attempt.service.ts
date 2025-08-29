@@ -199,8 +199,13 @@ export class TestAttemptService {
         'attemptAnswers',
       ],
     });
-    console.log('Retrieved attempt:', id, attempt);
     if (!attempt) throw new NotFoundException();
     return attempt;
+  }
+  async count() {
+    const count = await this.repo.count({
+      where: { status: AttemptStatus.SUBMITTED },
+    });
+    return { count };
   }
 }

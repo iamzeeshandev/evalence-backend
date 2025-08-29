@@ -31,4 +31,9 @@ export class TestAttemptController {
   get(@Param('id') id: string) {
     return this.service.get(id);
   }
+
+  @Get('attempt/counts')
+  counts() {
+    return this.service.count();
+  }
 }
