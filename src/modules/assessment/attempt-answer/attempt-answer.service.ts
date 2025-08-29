@@ -39,11 +39,11 @@ export class AttemptAnswerService {
       throw new BadRequestException('Invalid option for question');
 
     let answer = await this.repo.findOne({
-      where: { attemptId: attempt.id, questionId: q.id },
+      where: { testAttemptId: attempt.id, questionId: q.id },
     });
     if (!answer) {
       answer = this.repo.create({
-        attemptId: attempt.id,
+        testAttemptId: attempt.id,
         questionId: q.id,
         selectedOptionIds: dto.selectedOptionIds,
       });
@@ -64,7 +64,7 @@ export class AttemptAnswerService {
 
   async listByAttempt(attemptId: string) {
     return this.repo.find({
-      where: { attemptId },
+      where: { testAttemptId: attemptId },
       order: { createdAt: 'ASC' },
     });
   }

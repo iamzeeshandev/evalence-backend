@@ -78,9 +78,6 @@ export class TestAttempt {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
 
-  // @OneToMany(() => AttemptAnswer, (aa) => aa.testAttempt)
-  // attemptAnswers: AttemptAnswer[];
-
   @OneToMany(() => AttemptAnswer, (aa) => aa.testAttempt)
   attemptAnswers: AttemptAnswer[];
 }

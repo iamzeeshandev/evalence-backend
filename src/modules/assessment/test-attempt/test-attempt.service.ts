@@ -103,7 +103,7 @@ export class TestAttemptService {
 
       // Score
       const answers = await answersRepo.find({
-        where: { attemptId: attempt.id },
+        where: { testAttemptId: attempt.id },
       });
       const qMap = new Map(test.questions.map((q) => [q.id, q]));
       const correctSets = new Map(
@@ -181,6 +181,12 @@ export class TestAttemptService {
         },
       },
       order: { createdAt: 'DESC' },
+      relations: [
+        'test',
+        'test.questions',
+        'test.questions.options',
+        'attemptAnswers',
+      ],
     });
   }
   async get(id: string) {

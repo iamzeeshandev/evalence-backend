@@ -12,14 +12,14 @@ import { Question } from 'src/modules/question/entities/question.entity';
 import { TestAttempt } from '../../test-attempt/entities/test-attempt.entity';
 
 @Entity('attempt_answers')
-@Unique(['attemptId', 'questionId'])
-@Index(['attemptId'])
+@Unique(['testAttemptId', 'questionId'])
+@Index(['testAttemptId'])
 export class AttemptAnswer {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column('uuid')
-  attemptId: string;
+  testAttemptId: string;
 
   @Column('uuid')
   questionId: string;
