@@ -78,6 +78,12 @@ export class TestAttempt {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
 
-  @OneToMany(() => AttemptAnswer, (aa) => aa.testAttempt)
+  @OneToMany(
+    () => AttemptAnswer,
+    (attemptAnswer) => attemptAnswer.testAttempt,
+    {
+      cascade: true,
+    },
+  )
   attemptAnswers: AttemptAnswer[];
 }
