@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { Company } from '../../company/entities/company.entity';
 import { UserRole } from 'src/enums/user-role.enum';
-import { UserTestAssignment } from 'src/modules/assessment/test-assignment/entities/user-test-assignments.entity';
+import { TestAttempt } from 'src/modules/assessment/test-attempt/entities/test-attempt.entity';
 
 @Entity('users')
 export class User {
@@ -63,6 +63,6 @@ export class User {
   @ManyToOne(() => Company, (company) => company.users)
   company: Company;
 
-  @OneToMany(() => UserTestAssignment, (uta) => uta.user)
-  userTestAssignments: UserTestAssignment[];
+  @OneToMany(() => TestAttempt, (ta) => ta.user)
+  testAttempts: TestAttempt[];
 }

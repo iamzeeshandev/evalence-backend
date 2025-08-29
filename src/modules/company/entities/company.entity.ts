@@ -8,8 +8,6 @@ import {
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { CompanyStatus } from 'src/enums/company-status.enum';
-import { TestAssignment } from 'src/modules/assessment/test-assignment/entities/test-assignment.entity';
-
 @Entity('companies')
 export class Company {
   @PrimaryGeneratedColumn('uuid')
@@ -70,7 +68,4 @@ export class Company {
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
   updatedAt: Date;
-
-  @OneToMany(() => TestAssignment, (ta) => ta.company)
-  testAssignments: TestAssignment[];
 }

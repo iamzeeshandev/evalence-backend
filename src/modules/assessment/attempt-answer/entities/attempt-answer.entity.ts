@@ -47,9 +47,9 @@ export class AttemptAnswer {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => TestAttempt, { onDelete: 'CASCADE' })
-  attempt: TestAttempt;
-
   @ManyToOne(() => Question, { onDelete: 'CASCADE' })
   question: Question;
+
+  @ManyToOne(() => TestAttempt, { onDelete: 'CASCADE' })
+  testAttempt: TestAttempt;
 }

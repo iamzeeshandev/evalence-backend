@@ -9,11 +9,6 @@ export class StartAttemptDto {
   @ApiProperty()
   @IsUUID()
   userId: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsUUID()
-  userAssignmentId?: string;
 }
 
 export class ListAttemptsDto {

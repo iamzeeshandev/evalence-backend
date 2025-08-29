@@ -11,8 +11,8 @@ export class AttemptAnswerService {
   constructor(
     @InjectRepository(AttemptAnswer)
     private readonly repo: Repository<AttemptAnswer>,
-    private readonly testService: TestService, // cross-module
-    private readonly attemptService: TestAttemptService, // cross-module
+    private readonly testService: TestService,
+    private readonly attemptService: TestAttemptService,
   ) {}
 
   async upsertAnswer(dto: SaveAnswerDto) {

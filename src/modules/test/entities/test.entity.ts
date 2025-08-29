@@ -1,4 +1,4 @@
-import { TestAssignment } from 'src/modules/assessment/test-assignment/entities/test-assignment.entity';
+import { TestAttempt } from 'src/modules/assessment/test-attempt/entities/test-attempt.entity';
 import { Question } from 'src/modules/question/entities/question.entity';
 import {
   Entity,
@@ -48,6 +48,6 @@ export class Test {
   @OneToMany(() => Question, (question) => question.test, { cascade: true })
   questions: Question[];
 
-  @OneToMany(() => TestAssignment, (ta) => ta.test)
-  testAssignments: TestAssignment[];
+  @OneToMany(() => TestAttempt, (ta) => ta.test)
+  testAttempts: TestAttempt[];
 }

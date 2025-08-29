@@ -8,14 +8,12 @@ import { Repository } from 'typeorm';
 import { Test } from '../test/entities/test.entity';
 import { CreateTestDto } from '../test/dto/create-test-dto';
 import { UpdateTestDto } from '../test/dto/update-test-dto';
-import { TestAssignmentsService } from '../assessment/test-assignment/test-assignment.service';
 
 @Injectable()
 export class TestService {
   constructor(
     @InjectRepository(Test)
     private testRepository: Repository<Test>,
-    private testAssignmentsService: TestAssignmentsService,
   ) {}
 
   async findAll(): Promise<Test[]> {
@@ -38,16 +36,6 @@ export class TestService {
     }
 
     return test;
-  }
-
-  async findCompanyTests(companyId: string) {
-    const result =
-      await this.testAssignmentsService.findCompanyTests(companyId);
-    return result;
-  }
-  async findUserTests(userId: string) {
-    const result = await this.testAssignmentsService.findUserTests(userId);
-    return result;
   }
 
   async create(createTestDto: CreateTestDto): Promise<Test> {

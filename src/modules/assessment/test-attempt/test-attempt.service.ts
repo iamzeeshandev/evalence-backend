@@ -2,14 +2,12 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { TestAttempt } from './entities/test-attempt.entity';
 import { ListAttemptsDto, StartAttemptDto } from './dto/start-attempt.dto';
 import { SubmitAttemptDto } from './dto/submit-attempt.dto';
-import { TestAssignmentsService } from '../test-assignment/test-assignment.service';
 import { TestService } from 'src/modules/test/test.service';
 import { AttemptStatus } from 'src/enums/attempt.enum';
 import { AttemptAnswer } from '../attempt-answer/entities/attempt-answer.entity';
@@ -21,7 +19,6 @@ export class TestAttemptService {
     private readonly repo: Repository<TestAttempt>,
     private readonly testRead: TestService,
     private readonly dataSource: DataSource,
-    private readonly assignmentsService: TestAssignmentsService,
   ) {}
 
   private isTimedOut(startedAt: Date, durationMinutes: number): boolean {
@@ -48,33 +45,7 @@ export class TestAttemptService {
   }
 
   async start(dto: StartAttemptDto) {
-    const { userId, testId, userAssignmentId } = dto;
-
-    // const test = await this.testRead.getActiveTestWithQuestions(dto.testId);
-
-    // Enforce assignment & maxAttempts if provided (or optional)
-    if (dto.userAssignmentId) {
-      const [assignment] = await this.assignmentsService.userList({
-        userAssignmentId,
-        userId,
-      });
-      if (
-        !assignment ||
-        assignment.id !== userAssignmentId ||
-        !assignment.isActive
-      ) {
-        throw new ForbiddenException('Invalid assignment');
-      }
-      const count = await this.repo.count({
-        where: {
-          userId,
-          testId: dto.testId,
-          userAssignmentId,
-        },
-      });
-      if (count >= assignment.maxAttempts)
-        throw new ForbiddenException('Max attempts reached');
-    }
+    const { userId, testId } = dto;
 
     // Resume if an in-progress attempt exists and not timed out
     // const existing = await this.repo.findOne({
@@ -96,7 +67,6 @@ export class TestAttemptService {
     const attempt = this.repo.create({
       testId,
       userId,
-      userAssignmentId,
       status: AttemptStatus.IN_PROGRESS,
       startedAt: new Date(),
       questionCount: 2,
@@ -204,7 +174,11 @@ export class TestAttemptService {
   }
 
   async get(id: string) {
-    const attempt = await this.repo.findOne({ where: { id } });
+    const attempt = await this.repo.findOne({
+      where: { id },
+      relations: ['test', 'attemptAnswers'],
+    });
+    console.log('Retrieved attempt:', id, attempt);
     if (!attempt) throw new NotFoundException();
     return attempt;
   }

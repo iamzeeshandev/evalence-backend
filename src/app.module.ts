@@ -14,7 +14,6 @@ import { OptionModule } from './modules/option/option.module';
 import { S3Module } from './s3/s3.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { FileModule } from './modules/file/file.module';
-import { TestAssignmentsModule } from './modules/assessment/test-assignment/test-assignment.module';
 import { AttemptAnswerModule } from './modules/assessment/attempt-answer/attempt-answer.module';
 import { TestAttemptModule } from './modules/assessment/test-attempt/test-attempt.module';
 
@@ -46,7 +45,6 @@ import { TestAttemptModule } from './modules/assessment/test-attempt/test-attemp
     UploadModule,
 
     // Assessment
-    TestAssignmentsModule,
     TestAttemptModule,
     AttemptAnswerModule,
   ],

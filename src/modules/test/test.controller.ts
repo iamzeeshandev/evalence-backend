@@ -17,7 +17,7 @@ import { ApiTags } from '@nestjs/swagger';
 @Controller('tests')
 export class TestController {
   constructor(private readonly testService: TestService) {}
-  @Get()
+  @Get('list')
   findAll(): Promise<Test[]> {
     return this.testService.findAll();
   }
@@ -25,16 +25,6 @@ export class TestController {
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Test> {
     return this.testService.findOne(id);
-  }
-
-  @Get('company/:companyId')
-  findCompanyTests(@Param('companyId') companyId: string) {
-    return this.testService.findCompanyTests(companyId);
-  }
-
-  @Get('user/:userId')
-  findUserTests(@Param('userId') userId: string) {
-    return this.testService.findUserTests(userId);
   }
 
   @Post()

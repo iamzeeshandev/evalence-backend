@@ -6,11 +6,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  OneToMany,
 } from 'typeorm';
 import { Test } from 'src/modules/test/entities/test.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import { AttemptStatus } from 'src/enums/attempt.enum';
-import { UserTestAssignment } from '../../test-assignment/entities/user-test-assignments.entity';
+import { AttemptAnswer } from '../../attempt-answer/entities/attempt-answer.entity';
 
 @Entity('test_attempts')
 @Index(['testId', 'userId'])
@@ -23,9 +24,6 @@ export class TestAttempt {
 
   @Column('uuid')
   userId: string;
-
-  @Column('uuid', { nullable: true })
-  userAssignmentId: string | null;
 
   @Column({
     type: 'enum',
@@ -80,6 +78,6 @@ export class TestAttempt {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   user: User;
 
-  @ManyToOne(() => UserTestAssignment, { onDelete: 'CASCADE' })
-  userAssignment: UserTestAssignment;
+  @OneToMany(() => AttemptAnswer, (aa) => aa.testAttempt)
+  attemptAnswers: AttemptAnswer[];
 }
