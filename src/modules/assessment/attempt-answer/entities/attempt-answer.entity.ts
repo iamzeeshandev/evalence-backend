@@ -50,6 +50,11 @@ export class AttemptAnswer {
   @ManyToOne(() => Question, { onDelete: 'CASCADE' })
   question: Question;
 
-  @ManyToOne(() => TestAttempt, { onDelete: 'CASCADE' })
+  // @ManyToOne(() => TestAttempt, { onDelete: 'CASCADE' })
+  // testAttempt: TestAttempt;
+
+  @ManyToOne(() => TestAttempt, (attempt) => attempt.attemptAnswers, {
+    onDelete: 'CASCADE',
+  })
   testAttempt: TestAttempt;
 }

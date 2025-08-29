@@ -176,7 +176,12 @@ export class TestAttemptService {
   async get(id: string) {
     const attempt = await this.repo.findOne({
       where: { id },
-      relations: ['test', 'attemptAnswers'],
+      relations: [
+        'test',
+        'test.questions',
+        'test.questions.options',
+        'attemptAnswers',
+      ],
     });
     console.log('Retrieved attempt:', id, attempt);
     if (!attempt) throw new NotFoundException();
