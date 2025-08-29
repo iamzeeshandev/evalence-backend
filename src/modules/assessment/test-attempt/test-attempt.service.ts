@@ -173,6 +173,16 @@ export class TestAttemptService {
     });
   }
 
+  async userAttempts(userId: string) {
+    return this.repo.find({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+      order: { createdAt: 'DESC' },
+    });
+  }
   async get(id: string) {
     const attempt = await this.repo.findOne({
       where: { id },

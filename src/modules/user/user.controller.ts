@@ -13,6 +13,11 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @Get('dropdown/users')
+  dropDown() {
+    return this.userService.findAll();
+  }
+
   @Get('company/:id')
   findCompanyUsers(@Param('id') companyId: string) {
     return this.userService.findByCompanyId(companyId);

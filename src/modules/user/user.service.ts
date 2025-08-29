@@ -40,12 +40,16 @@ export class UserService {
   }
 
   async findAll(): Promise<User[]> {
-    return this.userRepository.find({ relations: ['company'] });
+    return this.userRepository.find();
+  }
+  async dropDown(): Promise<User[]> {
+    return this.userRepository.find({
+      select: ['id', 'firstName', 'lastName', 'email'],
+    });
   }
   async findByCompanyId(companyId: string): Promise<User[]> {
     return this.userRepository.find({
       where: { company: { id: companyId } },
-      relations: ['company'],
     });
   }
 

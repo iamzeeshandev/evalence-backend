@@ -22,6 +22,10 @@ export class TestAttemptController {
     userId = userId || 'CURRENT_USER_ID';
     return this.service.list(userId, q);
   }
+  @Get('user-list/:userId')
+  userAttempts(@Param('userId') userId: string) {
+    return this.service.userAttempts(userId);
+  }
 
   @Get(':id')
   get(@Param('id') id: string) {
