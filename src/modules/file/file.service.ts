@@ -7,10 +7,12 @@ export class FileService {
   constructor(private configService: ConfigService<AppConfig>) {}
 
   generateFileUrl(filename: string): string {
-    const baseUrl =
-      this.configService.get('backendDomain', { infer: true }) ||
-      'http://127.0.0.1:3333';
-    return `${baseUrl}/uploads/${filename}`;
+    // const baseUrl =
+    //   this.configService.get('backendDomain', { infer: true }) ||
+    //   'http://127.0.0.1:3333';
+    // return `${baseUrl}/uploads/${filename}`;
+    return `http://127.0.0.1:3333/uploads/${filename}`;
+
   }
 
   getFilePath(filename: string): string {
