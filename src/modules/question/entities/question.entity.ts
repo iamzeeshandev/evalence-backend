@@ -15,6 +15,9 @@ export class Question {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ type: 'number' })
+  questionNo: number;
+
   @Column({ type: 'text' })
   text: string;
 
