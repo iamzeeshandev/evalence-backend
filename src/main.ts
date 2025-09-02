@@ -24,7 +24,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
   app.enableCors({
-    origin: 'http://localhost:3020',
+    origin: 'http://localhost:4444',
     credentials: true,
   });
   await app.listen(configService.getOrThrow('app.port', { infer: true }));
