@@ -9,7 +9,7 @@ export class FileService {
   generateFileUrl(filename: string): string {
     const baseUrl =
       this.configService.get('backendDomain', { infer: true }) ||
-      'http://localhost:3000';
+      'http://127.0.0.1:3333';
     return `${baseUrl}/uploads/${filename}`;
   }
 
