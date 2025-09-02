@@ -20,7 +20,9 @@ export class TestService {
     return await this.testRepository.find({
       relations: ['questions', 'questions.options'],
       order: {
-        createdAt: 'DESC',
+        questions: {
+          questionNo: 'ASC',
+        },
       },
     });
   }

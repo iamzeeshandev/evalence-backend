@@ -180,7 +180,13 @@ export class TestAttemptService {
           id: userId,
         },
       },
-      order: { createdAt: 'DESC' },
+      order: {
+        test: {
+          questions: {
+            questionNo: 'ASC',
+          },
+        },
+      },
       relations: [
         'test',
         'test.questions',
