@@ -12,6 +12,10 @@ import { CreateOptionDto } from 'src/modules/option/dto/create-option-dto';
 import { Type } from 'class-transformer';
 
 export class CreateQuestionDto {
+  @ApiProperty()
+  @IsInt()
+  questionNo: number;
+
   @ApiProperty({ example: 'What is `const`?' })
   @IsString()
   text: string;
