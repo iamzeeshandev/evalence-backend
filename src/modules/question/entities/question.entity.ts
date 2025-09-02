@@ -15,7 +15,7 @@ export class Question {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'number' })
+  @Column({ type: 'int' })
   questionNo: number;
 
   @Column({ type: 'text' })
