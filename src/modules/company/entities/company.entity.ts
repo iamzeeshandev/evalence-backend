@@ -16,9 +16,6 @@ export class Company {
   @Column({ unique: true })
   name: string;
 
-  @Column({ unique: true })
-  email: string;
-
   @Column({ nullable: true })
   phone: string;
 
@@ -53,9 +50,6 @@ export class Company {
   })
   status: CompanyStatus;
 
-  @OneToMany(() => User, (user) => user.company)
-  users: User[];
-
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
@@ -68,4 +62,7 @@ export class Company {
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
   updatedAt: Date;
+
+  @OneToMany(() => User, (user) => user.company)
+  users: User[];
 }

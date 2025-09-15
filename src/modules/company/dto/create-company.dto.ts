@@ -7,7 +7,7 @@ import {
   IsPhoneNumber,
   IsUrl,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export class CreateCompanyDto {
   @ApiProperty({ example: 'TechCorp Inc' })
@@ -70,3 +70,16 @@ export class CreateCompanyDto {
   @IsString()
   size?: string;
 }
+
+export class CreateCompanyPayload {
+  @ApiProperty({ example: 'TechCorp Inc' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({ example: '+1234567890', required: false })
+  @IsOptional()
+  @IsPhoneNumber()
+  phone?: string;
+}
+export class UpdateCompanyDto extends PartialType(CreateCompanyDto) {}

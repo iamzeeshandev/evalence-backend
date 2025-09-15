@@ -1,10 +1,12 @@
 import { TestAttempt } from 'src/modules/assessment/test-attempt/entities/test-attempt.entity';
 import { Question } from 'src/modules/question/entities/question.entity';
+import { Battery } from 'src/modules/battery/entities/battery.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   OneToMany,
+  ManyToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -50,4 +52,7 @@ export class Test {
 
   @OneToMany(() => TestAttempt, (ta) => ta.test)
   testAttempts: TestAttempt[];
+
+  @ManyToMany(() => Battery, (battery) => battery.tests)
+  batteries: Battery[];
 }

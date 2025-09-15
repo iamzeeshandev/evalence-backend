@@ -9,12 +9,16 @@ import { TypeOrmConfigService } from './database/typeorm-config.service';
 import { DataSource } from 'typeorm';
 import databaseConfig from './database/config/database.config';
 import { TestModule } from './modules/test/test.module';
+import { BatteryModule } from './modules/battery/battery.module';
 import { QuestionModule } from './modules/question/question.module';
 import { OptionModule } from './modules/option/option.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { FileModule } from './modules/file/file.module';
 import { AttemptAnswerModule } from './modules/assessment/attempt-answer/attempt-answer.module';
 import { TestAttemptModule } from './modules/assessment/test-attempt/test-attempt.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -35,9 +39,11 @@ import { TestAttemptModule } from './modules/assessment/test-attempt/test-attemp
     }),
     FileModule,
     HomeModule,
+    AuthModule,
     CompaniesModule,
     UsersModule,
     TestModule,
+    BatteryModule,
     QuestionModule,
     OptionModule,
     UploadModule,
@@ -45,6 +51,12 @@ import { TestAttemptModule } from './modules/assessment/test-attempt/test-attemp
     // Assessment
     TestAttemptModule,
     AttemptAnswerModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
   ],
 })
 export class AppModule {}

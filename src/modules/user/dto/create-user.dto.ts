@@ -42,6 +42,25 @@ export class CreateUserDto {
   @IsNotEmpty()
   companyId: string;
 }
+export class CreateAdminDto {
+  @ApiProperty({ example: 'john.doe@company.com' })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ example: 'password123', minLength: 6 })
+  @IsString()
+  @MinLength(6)
+  password: string;
+
+  @ApiProperty({ enum: UserRole, example: UserRole.EMPLOYEE })
+  @IsEnum(UserRole)
+  role: UserRole;
+
+  @ApiProperty({ example: '1' })
+  @IsNotEmpty()
+  companyId: string;
+}
 
 export class LoginDto {
   @ApiProperty({ example: 'john.doe@company.com' })
