@@ -42,6 +42,7 @@ export class AuthController {
     return await this.authService.signIn(loginDto);
   }
 
+  @Public()
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
