@@ -112,6 +112,14 @@ export class UserService {
     return user;
   }
 
+  async findUserById(id: string): Promise<User | null> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['company'],
+    });
+    return user;
+  }
+
   async updateLastLogin(userId: string): Promise<void> {
     await this.userRepository.update(userId, {
       lastLoginAt: new Date(),

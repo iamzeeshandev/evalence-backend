@@ -56,5 +56,8 @@ export default registerAs<AppConfig>('app', () => {
         ? parseInt(process.env.PORT, 10)
         : 3000,
     apiPrefix: process.env.API_PREFIX || 'api',
+    jwtSecret: process.env.JWT_SECRET,
+    jwtExpiry: process.env.JWT_EXPIRY,
+    jwtRefreshExpiry: process.env.JWT_REFRESH_EXPIRY,
   };
 });

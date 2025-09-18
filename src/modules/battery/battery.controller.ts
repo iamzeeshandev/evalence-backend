@@ -12,9 +12,10 @@ import { BatteryService } from './battery.service';
 import { CreateBatteryDto } from './dto/create-battery.dto';
 import { Battery } from './entities/battery.entity';
 import { UpdateBatteryDto } from './dto/update-battery.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('Battery')
+@ApiBearerAuth('JWT-auth')
 @Controller('batteries')
 export class BatteryController {
   constructor(private readonly batteryService: BatteryService) {}

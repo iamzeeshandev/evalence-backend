@@ -6,6 +6,17 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { staticAssetsConfig } from './config/static-assets.config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
+import * as dotenv from 'dotenv';
+
+// Load environment variables manually
+dotenv.config();
+console.log('=== Environment Variables Debug ===');
+console.log('JWT_EXPIRY from process.env:', process.env.JWT_EXPIRY);
+console.log(
+  'JWT_SECRET from process.env:',
+  process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+);
+console.log('================================');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -17,9 +28,32 @@ async function bootstrap() {
   const configService = app.get(ConfigService<AllConfigType>);
   const config = new DocumentBuilder()
     .setTitle('Evalence API')
-    .setDescription('API documentation')
+    .setDescription('API documentation for Evalence application')
     .setVersion('1.0')
-    .addTag('evalence')
+    .addTag('Authentication', 'User authentication endpoints')
+    .addTag('User', 'User management endpoints')
+    .addTag('Company', 'Company management endpoints')
+    .addTag('Test', 'Test management endpoints')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Enter refresh token',
+      },
+      'refresh-token',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);

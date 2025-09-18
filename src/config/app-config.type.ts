@@ -6,4 +6,7 @@ export type AppConfig = {
   backendDomain: string;
   port: number;
   apiPrefix: string;
+  jwtSecret?: string;
+  jwtExpiry?: string;
+  jwtRefreshExpiry?: string;
 };

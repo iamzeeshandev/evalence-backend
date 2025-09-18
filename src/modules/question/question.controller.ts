@@ -11,9 +11,10 @@ import { QuestionService } from './question.service';
 import { CreateQuestionDto } from './dto/create-question-dto';
 import { Question } from './entities/question.entity';
 import { UpdateQuestionDto } from './dto/update-question.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('Questions')
+@ApiBearerAuth('JWT-auth')
 @Controller('tests/:testId/questions')
 export class QuestionController {
   constructor(private readonly questionService: QuestionService) {}

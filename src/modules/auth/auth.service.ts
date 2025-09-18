@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { CompanyService } from '../company/company.service';
 import { JWT_EXPIRY, JWT_SECRET } from 'src/utils/jwt-options';
+import { ConfigService } from '@nestjs/config';
 import { PasswordUtil } from 'src/utils/password.util';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
@@ -21,6 +22,7 @@ export class AuthService {
     private usersService: UserService,
     private companyService: CompanyService,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async signIn(loginDto: LoginDto): Promise<AuthResponseDto> {
@@ -53,16 +55,35 @@ export class AuthService {
       companyId: user.company?.id,
     };
 
+    const jwtExpiry = this.configService.get<string>('app.jwtExpiry') || JWT_EXPIRY;
+    const jwtSecret = process.env.JWT_SECRET || JWT_SECRET;
+
+    console.log('Creating token with expiry:', jwtExpiry);
+    console.log(
+      'JWT_EXPIRY from app config:',
+      this.configService.get<string>('app.jwtExpiry'),
+    );
+    console.log('JWT_EXPIRY from env:', process.env.JWT_EXPIRY);
+    console.log('All app config:', this.configService.get('app'));
+
     const accessToken = await this.jwtService.signAsync(payload, {
-      secret: JWT_SECRET,
-      expiresIn: JWT_EXPIRY,
+      secret: jwtSecret,
+      expiresIn: jwtExpiry,
     });
+
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      secret: jwtSecret,
+      expiresIn: '7d',
+    });
+
+    console.log('Token created at:', new Date().toISOString());
 
     return {
       accessToken,
+      refreshToken,
       user: this.mapUserToResponse(user),
       company: this.mapCompanyToResponse(user.company),
-      expiresIn: JWT_EXPIRY,
+      expiresIn: jwtExpiry,
     };
   }
 
@@ -100,6 +121,46 @@ export class AuthService {
       company: this.mapCompanyToResponse(company),
       message: 'User registered successfully',
     };
+  }
+
+  async refreshToken(refreshToken: string): Promise<AuthResponseDto> {
+    try {
+      // Verify the refresh token
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: process.env.JWT_SECRET,
+      });
+
+      // Get user from database to ensure they still exist and are active
+      const user = await this.usersService.findUserById(payload.sub);
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException('User not found or inactive');
+      }
+
+      // Create new access token with 15s expiry
+      const newPayload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        companyId: user.company?.id,
+      };
+
+      const accessToken = await this.jwtService.signAsync(newPayload, {
+        secret: process.env.JWT_SECRET,
+        expiresIn: '15s',
+      });
+
+      console.log('New access token created at:', new Date().toISOString());
+
+      return {
+        accessToken,
+        refreshToken: refreshToken, // Return the same refresh token for reuse
+        user: this.mapUserToResponse(user),
+        company: this.mapCompanyToResponse(user.company),
+        expiresIn: '15s',
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
   }
 
   private mapUserToResponse(user: User) {

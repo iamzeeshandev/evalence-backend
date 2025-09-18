@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JWT_SECRET } from 'src/utils/jwt-options';
 import { AuthenticatedUser } from '../interfaces/auth.interface';
 
-interface JwtPayload {
+interface JwtRefreshPayload {
   sub: string;
   email: string;
   role: string;
@@ -12,7 +12,7 @@ interface JwtPayload {
 }
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   public constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -21,9 +21,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
-    console.log('JWT Strategy validating payload at:', new Date().toISOString());
-    console.log('Payload:', payload);
+  async validate(payload: JwtRefreshPayload): Promise<AuthenticatedUser> {
+    console.log('JWT Refresh Strategy validating payload at:', new Date().toISOString());
+    console.log('Refresh Payload:', payload);
     
     return {
       userId: payload.sub,

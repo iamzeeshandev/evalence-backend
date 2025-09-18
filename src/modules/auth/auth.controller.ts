@@ -1,4 +1,14 @@
-import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Headers,
+  UnauthorizedException,
+  Req,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
@@ -11,10 +21,13 @@ import {
   ApiBadRequestResponse,
   ApiUnauthorizedResponse,
   ApiConflictResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Public } from './decorators/auth.decorator';
+import { Public, CurrentUser } from './decorators/auth.decorator';
+import { AuthenticatedUser } from './interfaces/auth.interface';
+import { Request } from 'express';
 
-// @ApiTags('Authentication')
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -62,5 +75,95 @@ export class AuthController {
   })
   async signup(@Body() signupDto: SignupDto): Promise<SignupResponseDto> {
     return await this.authService.signup(signupDto);
+  }
+
+  @Public()
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'User logout',
+    description: 'Logout user (client-side token removal)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Logout successful',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Logout successful' },
+      },
+    },
+  })
+  async logout(): Promise<{ message: string }> {
+    return { message: 'Logout successful' };
+  }
+
+  @Public()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('refresh-token')
+  async refreshToken(@Req() request: Request) {
+    console.log('authHeader:', request.headers.authorization);
+    const authHeader = request.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Invalid authorization header');
+    }
+
+    const refreshToken = authHeader.replace('Bearer ', '');
+    return this.authService.refreshToken(refreshToken);
+  }
+
+  @Post('test-token')
+  @ApiOperation({ summary: 'Test JWT token expiration' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token validation result',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        timestamp: { type: 'string' },
+        user: { type: 'object' },
+      },
+    },
+  })
+  testToken(@CurrentUser() user: AuthenticatedUser) {
+    return {
+      message: 'Token is valid',
+      timestamp: new Date().toISOString(),
+      user: user,
+    };
+  }
+
+  @Public()
+  @Get('debug-env')
+  @ApiOperation({ summary: 'Debug environment variables' })
+  @ApiResponse({
+    status: 200,
+    description: 'Environment variables debug info',
+    schema: {
+      type: 'object',
+      properties: {
+        jwtExpiry: { type: 'string' },
+        jwtSecret: { type: 'string' },
+        allJwtVars: { type: 'object' },
+      },
+    },
+  })
+  debugEnv() {
+    return {
+      jwtExpiry: process.env.JWT_EXPIRY,
+      jwtSecret: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+      allJwtVars: Object.keys(process.env)
+        .filter((key) => key.includes('JWT'))
+        .reduce(
+          (acc, key) => {
+            acc[key] = process.env[key] ? 'SET' : 'NOT SET';
+            return acc;
+          },
+          {} as Record<string, string>,
+        ),
+      timestamp: new Date().toISOString(),
+    };
   }
 }

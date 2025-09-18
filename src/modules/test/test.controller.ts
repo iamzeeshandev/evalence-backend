@@ -11,9 +11,10 @@ import { TestService } from './test.service';
 import { CreateTestDto } from './dto/create-test-dto';
 import { Test } from './entities/test.entity';
 import { UpdateTestDto } from './dto/update-test-dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('Test')
+@ApiBearerAuth('JWT-auth')
 @Controller('tests')
 export class TestController {
   constructor(private readonly testService: TestService) {}
