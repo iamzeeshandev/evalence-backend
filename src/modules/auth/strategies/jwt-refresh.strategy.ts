@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { JWT_SECRET } from 'src/utils/jwt-options';
 import { AuthenticatedUser } from '../interfaces/auth.interface';
 
 interface JwtRefreshPayload {
@@ -12,19 +11,25 @@ interface JwtRefreshPayload {
 }
 
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class JwtRefreshStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   public constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || JWT_SECRET,
+      secretOrKey: process.env.JWT_SECRET!,
     });
   }
 
   async validate(payload: JwtRefreshPayload): Promise<AuthenticatedUser> {
-    console.log('JWT Refresh Strategy validating payload at:', new Date().toISOString());
+    console.log(
+      'JWT Refresh Strategy validating payload at:',
+      new Date().toISOString(),
+    );
     console.log('Refresh Payload:', payload);
-    
+
     return {
       userId: payload.sub,
       email: payload.email,

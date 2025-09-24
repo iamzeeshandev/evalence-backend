@@ -8,7 +8,6 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 
-// Load environment variables manually
 dotenv.config();
 console.log('=== Environment Variables Debug ===');
 console.log('JWT_EXPIRY from process.env:', process.env.JWT_EXPIRY);
@@ -58,7 +57,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
   app.enableCors({
-    origin: 'http://127.0.0.1:4444',
+    // origin: 'http://127.0.0.1:4444',
+    origin: 'http://localhost:3020',
     credentials: true,
   });
   await app.listen(configService.getOrThrow('app.port', { infer: true }));

@@ -8,8 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { CreateAdminDto, CreateUserDto, LoginDto } from './dto/create-user.dto';
-import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { CreateAdminDto, CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CompanyService } from '../company/company.service';
 import { PasswordUtil } from 'src/utils/password.util';
@@ -25,15 +24,17 @@ export class UserService {
   ) {}
 
   async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+    return await this.userRepository.find({
+      where: { isDeleted: false },
+    });
   }
   async dropDown(): Promise<User[]> {
-    return this.userRepository.find({
+    return await this.userRepository.find({
       select: ['id', 'firstName', 'lastName', 'email'],
     });
   }
   async findByCompanyId(companyId: string): Promise<User[]> {
-    return this.userRepository.find({
+    return await this.userRepository.find({
       where: { company: { id: companyId } },
     });
   }
@@ -93,16 +94,6 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async login(dto: LoginDto): Promise<User> {
-    const user = await this.userRepository.findOne({
-      where: { email: dto.email },
-      relations: ['company'],
-    });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
-  }
 
   async findUserByEmail(email: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
@@ -126,9 +117,61 @@ export class UserService {
     });
   }
 
-  // Employee management methods for company admins
-  async createEmployeeForCompany(
-    createEmployeeDto: CreateEmployeeDto,
+
+  // Unified methods for the new controller
+  async findOne(id: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { id, isDeleted: false },
+      relations: ['company'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return user;
+  }
+
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.findOne(id);
+
+    // If updating email, check for duplicates
+    if (updateUserDto.email && updateUserDto.email !== user.email) {
+      const existing = await this.userRepository.findOne({
+        where: { email: updateUserDto.email },
+      });
+      if (existing) {
+        throw new BadRequestException('Email already exists');
+      }
+    }
+
+    // Hash password if provided
+    if (updateUserDto.password) {
+      updateUserDto.password = await PasswordUtil.hashPassword(
+        updateUserDto.password,
+      );
+    }
+
+    Object.assign(user, updateUserDto);
+    return this.userRepository.save(user);
+  }
+
+  async remove(id: string): Promise<void> {
+    const user = await this.findOne(id);
+
+    // Prevent deactivating super admin
+    if (user.role === UserRole.SUPER_ADMIN) {
+      throw new BadRequestException('Cannot deactivate super admin');
+    }
+
+    await this.userRepository.update(id, {
+      isActive: false,
+      isDeleted: true,
+    });
+  }
+
+  async createUserForCompany(
+    createUserDto: CreateUserDto,
     companyId: string,
   ): Promise<User> {
     const company = await this.companyService.findOne(companyId);
@@ -139,7 +182,7 @@ export class UserService {
 
     // Check if user already exists
     const existing = await this.userRepository.findOne({
-      where: { email: createEmployeeDto.email },
+      where: { email: createUserDto.email },
     });
     if (existing) {
       throw new BadRequestException('User with given email already exists');
@@ -147,12 +190,12 @@ export class UserService {
 
     // Hash password
     const hashedPassword = await PasswordUtil.hashPassword(
-      createEmployeeDto.password,
+      createUserDto.password,
     );
 
     // Ensure role is EMPLOYEE (company admin can't create other admins)
     const userData = {
-      ...createEmployeeDto,
+      ...createUserDto,
       password: hashedPassword,
       role: UserRole.EMPLOYEE,
     };
@@ -165,7 +208,7 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async findEmployeeInCompany(
+  async findUserInCompany(
     userId: string,
     companyId: string,
   ): Promise<User> {
@@ -180,19 +223,19 @@ export class UserService {
 
     if (!user) {
       throw new NotFoundException(
-        `Employee with ID ${userId} not found in your company`,
+        `User with ID ${userId} not found in your company`,
       );
     }
 
     return user;
   }
 
-  async updateEmployeeInCompany(
+  async updateUserInCompany(
     userId: string,
     updateUserDto: UpdateUserDto,
     companyId: string,
   ): Promise<User> {
-    const user = await this.findEmployeeInCompany(userId, companyId);
+    const user = await this.findUserInCompany(userId, companyId);
 
     // If updating email, check for duplicates
     if (updateUserDto.email && updateUserDto.email !== user.email) {
@@ -220,11 +263,11 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async deactivateEmployeeInCompany(
+  async deactivateUserInCompany(
     userId: string,
     companyId: string,
   ): Promise<void> {
-    const user = await this.findEmployeeInCompany(userId, companyId);
+    const user = await this.findUserInCompany(userId, companyId);
 
     // Prevent deactivating company admin
     if (user.role === UserRole.COMPANY_ADMIN) {

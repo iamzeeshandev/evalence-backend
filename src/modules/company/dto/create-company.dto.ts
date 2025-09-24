@@ -15,6 +15,11 @@ export class CreateCompanyDto {
   @IsNotEmpty()
   name: string;
 
+  @ApiProperty({ example: 'TechCorp Inc Description' })
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+
   @ApiProperty({ example: 'contact@techcorp.com' })
   @IsEmail()
   @IsNotEmpty()

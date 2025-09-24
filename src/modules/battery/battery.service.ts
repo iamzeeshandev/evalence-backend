@@ -116,4 +116,44 @@ export class BatteryService {
 
     return await this.batteryRepository.save(battery);
   }
+
+  async getBatteryTests(batteryId: string): Promise<Test[]> {
+    const battery = await this.findOne(batteryId);
+    return battery.tests;
+  }
+
+  async getBatteryTestCount(batteryId: string): Promise<number> {
+    const battery = await this.findOne(batteryId);
+    return battery.tests.length;
+  }
+
+  async isTestInBattery(batteryId: string, testId: string): Promise<boolean> {
+    const battery = await this.findOne(batteryId);
+    return battery.tests.some((test) => test.id === testId);
+  }
+
+  async getBatteriesByTest(testId: string): Promise<Battery[]> {
+    return await this.batteryRepository
+      .createQueryBuilder('battery')
+      .leftJoinAndSelect('battery.tests', 'test')
+      .where('test.id = :testId', { testId })
+      .getMany();
+  }
+
+  async duplicateBattery(
+    batteryId: string,
+    newName: string,
+    newDescription?: string,
+  ): Promise<Battery> {
+    const originalBattery = await this.findOne(batteryId);
+    
+    const newBattery = this.batteryRepository.create({
+      name: newName,
+      description: newDescription || originalBattery.description,
+      isActive: originalBattery.isActive,
+      tests: originalBattery.tests,
+    });
+
+    return await this.batteryRepository.save(newBattery);
+  }
 }

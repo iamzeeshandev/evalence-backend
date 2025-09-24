@@ -53,6 +53,10 @@ export class CreateAdminDto {
   @MinLength(6)
   password: string;
 
+  @ApiProperty({ example: '+1234567890', required: false })
+  @IsOptional()
+  phone?: string;
+
   @ApiProperty({ enum: UserRole, example: UserRole.EMPLOYEE })
   @IsEnum(UserRole)
   role: UserRole;

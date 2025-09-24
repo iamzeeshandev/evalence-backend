@@ -6,20 +6,22 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToMany,
 } from 'typeorm';
 import { Company } from '../../company/entities/company.entity';
 import { UserRole } from 'src/enums/user-role.enum';
 import { TestAttempt } from 'src/modules/assessment/test-attempt/entities/test-attempt.entity';
+import { Group } from '../../groups/entities/group.entity';
 
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ nullable: true })
   firstName: string;
 
-  @Column()
+  @Column({ nullable: true })
   lastName: string;
 
   @Column({ unique: true })
@@ -65,4 +67,7 @@ export class User {
 
   @OneToMany(() => TestAttempt, (ta) => ta.user)
   testAttempts: TestAttempt[];
+
+  @ManyToMany(() => Group, (group) => group.users)
+  groups: Group[];
 }

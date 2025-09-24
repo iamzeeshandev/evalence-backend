@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { CompanyStatus } from 'src/enums/company-status.enum';
+import { Group } from '../../groups/entities/group.entity';
 @Entity('companies')
 export class Company {
   @PrimaryGeneratedColumn('uuid')
@@ -15,6 +16,12 @@ export class Company {
 
   @Column({ unique: true })
   name: string;
+
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
+  @Column({ nullable: true })
+  email: string;
 
   @Column({ nullable: true })
   phone: string;
@@ -50,6 +57,9 @@ export class Company {
   })
   status: CompanyStatus;
 
+  @Column({ default: false })
+  isDeleted: boolean;
+
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP(6)',
@@ -65,4 +75,7 @@ export class Company {
 
   @OneToMany(() => User, (user) => user.company)
   users: User[];
+
+  @OneToMany(() => Group, (group) => group.company)
+  groups: Group[];
 }

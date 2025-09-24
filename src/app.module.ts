@@ -4,6 +4,7 @@ import appConfig from './config/app.config';
 import { HomeModule } from './modules/home/home.module';
 import { CompaniesModule } from './modules/company/company.module';
 import { UsersModule } from './modules/user/user.module';
+import { GroupsModule } from './modules/groups/groups.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfigService } from './database/typeorm-config.service';
 import { DataSource } from 'typeorm';
@@ -42,6 +43,7 @@ import { APP_GUARD } from '@nestjs/core';
     AuthModule,
     CompaniesModule,
     UsersModule,
+    GroupsModule,
     TestModule,
     BatteryModule,
     QuestionModule,

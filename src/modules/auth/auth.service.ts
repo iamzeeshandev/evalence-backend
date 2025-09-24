@@ -6,7 +6,6 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { CompanyService } from '../company/company.service';
-import { JWT_EXPIRY, JWT_SECRET } from 'src/utils/jwt-options';
 import { ConfigService } from '@nestjs/config';
 import { PasswordUtil } from 'src/utils/password.util';
 import { LoginDto } from './dto/login.dto';
@@ -55,8 +54,8 @@ export class AuthService {
       companyId: user.company?.id,
     };
 
-    const jwtExpiry = this.configService.get<string>('app.jwtExpiry') || JWT_EXPIRY;
-    const jwtSecret = process.env.JWT_SECRET || JWT_SECRET;
+    const jwtSecret = this.configService.get<string>('app.jwtSecret');
+    const jwtExpiry = this.configService.get<string>('app.jwtExpiry');
 
     console.log('Creating token with expiry:', jwtExpiry);
     console.log(
@@ -83,7 +82,7 @@ export class AuthService {
       refreshToken,
       user: this.mapUserToResponse(user),
       company: this.mapCompanyToResponse(user.company),
-      expiresIn: jwtExpiry,
+      expiresIn: jwtExpiry!,
     };
   }
 
