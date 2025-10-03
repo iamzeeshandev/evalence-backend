@@ -11,6 +11,8 @@ import { SubmitAttemptDto } from './dto/submit-attempt.dto';
 import { TestService } from 'src/modules/test/test.service';
 import { AttemptStatus } from 'src/enums/attempt.enum';
 import { AttemptAnswer } from '../attempt-answer/entities/attempt-answer.entity';
+import { BatteryAssignmentService } from '../../battery-assignment/battery-assignment.service';
+import { BatteryProgressService } from '../../battery-progress/battery-progress.service';
 
 @Injectable()
 export class TestAttemptService {
@@ -19,6 +21,8 @@ export class TestAttemptService {
     private readonly repo: Repository<TestAttempt>,
     private readonly testRead: TestService,
     private readonly dataSource: DataSource,
+    private readonly batteryAssignmentService: BatteryAssignmentService,
+    private readonly batteryProgressService: BatteryProgressService,
   ) {}
 
   private isTimedOut(startedAt: Date, durationMinutes: number): boolean {
@@ -45,7 +49,31 @@ export class TestAttemptService {
   }
 
   async start(dto: StartAttemptDto) {
-    const { userId, testId } = dto;
+    const { userId, testId, batteryId } = dto;
+
+    // Validate user has access to this test via battery assignment
+    if (batteryId) {
+      const hasAccess =
+        await this.batteryAssignmentService.validateUserTestAccess(
+          userId,
+          testId,
+        );
+      if (!hasAccess) {
+        throw new BadRequestException(
+          'User does not have access to this test through battery assignment',
+        );
+      }
+    } else {
+      // If no batteryId provided, check if user has access to the test
+      const hasAccess =
+        await this.batteryAssignmentService.validateUserTestAccess(
+          userId,
+          testId,
+        );
+      if (!hasAccess) {
+        throw new BadRequestException('User does not have access to this test');
+      }
+    }
 
     // Resume if an in-progress attempt exists and not timed out
     // const existing = await this.repo.findOne({
@@ -67,6 +95,7 @@ export class TestAttemptService {
     const attempt = this.repo.create({
       testId,
       userId,
+      batteryId,
       status: AttemptStatus.IN_PROGRESS,
       startedAt: new Date(),
       questionCount: 2,
@@ -162,7 +191,23 @@ export class TestAttemptService {
       attempt.isTimedOut = timedOut;
       attempt.submittedAt = new Date();
 
-      return repo.save(attempt);
+      const savedAttempt = await repo.save(attempt);
+
+      // Update battery progress if this attempt is associated with a battery
+      if (attempt.batteryId && attempt.status === AttemptStatus.SUBMITTED) {
+        try {
+          await this.batteryProgressService.createOrUpdateProgress(
+            attempt.userId,
+            attempt.batteryId,
+            attempt.testId,
+          );
+        } catch (error) {
+          // Log error but don't fail the submission
+          console.error('Failed to update battery progress:', error);
+        }
+      }
+
+      return savedAttempt;
     });
   }
 

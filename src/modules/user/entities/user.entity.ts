@@ -12,6 +12,8 @@ import { Company } from '../../company/entities/company.entity';
 import { UserRole } from 'src/enums/user-role.enum';
 import { TestAttempt } from 'src/modules/assessment/test-attempt/entities/test-attempt.entity';
 import { Group } from '../../groups/entities/group.entity';
+import { GroupUser } from '../../groups/entities/group-user.entity';
+import { BatteryProgress } from '../../battery-progress/entities/battery-progress.entity';
 
 @Entity('users')
 export class User {
@@ -68,6 +70,9 @@ export class User {
   @OneToMany(() => TestAttempt, (ta) => ta.user)
   testAttempts: TestAttempt[];
 
-  @ManyToMany(() => Group, (group) => group.users)
-  groups: Group[];
+  @OneToMany(() => GroupUser, (gu) => gu.user)
+  groupMemberships: GroupUser[];
+
+  @OneToMany(() => BatteryProgress, (progress) => progress.user)
+  batteryProgress: BatteryProgress[];
 }

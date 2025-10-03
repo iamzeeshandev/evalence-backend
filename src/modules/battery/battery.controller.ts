@@ -14,8 +14,18 @@ import { Battery } from './entities/battery.entity';
 import { UpdateBatteryDto } from './dto/update-battery.dto';
 import { Test } from 'src/modules/test/entities/test.entity';
 import { DuplicateBatteryDto } from './dto/duplicate-battery.dto';
-import { AddTestsToBatteryDto, RemoveTestsFromBatteryDto } from './dto/battery-test-management.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  AddTestsToBatteryDto,
+  RemoveTestsFromBatteryDto,
+  SetBatteryTestWeightsDto,
+} from './dto/battery-test-management.dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('Battery')
 @ApiBearerAuth('JWT-auth')
@@ -92,7 +102,7 @@ export class BatteryController {
     @Param('id') id: string,
     @Body() body: AddTestsToBatteryDto,
   ): Promise<Battery> {
-    return this.batteryService.addTestsToBattery(id, body.testIds);
+    return this.batteryService.addTestsToBattery(id, body.tests);
   }
 
   @Patch(':id/tests/remove')
@@ -108,7 +118,7 @@ export class BatteryController {
     @Param('id') id: string,
     @Body() body: RemoveTestsFromBatteryDto,
   ): Promise<Battery> {
-    return this.batteryService.removeTestsFromBattery(id, body.testIds);
+    return this.batteryService.removeTestsFromBattery(id, body.tests);
   }
 
   @Get(':id/tests')
@@ -179,6 +189,26 @@ export class BatteryController {
     @Param('id') id: string,
     @Body() body: DuplicateBatteryDto,
   ): Promise<Battery> {
-    return this.batteryService.duplicateBattery(id, body.name, body.description);
+    return this.batteryService.duplicateBattery(
+      id,
+      body.name,
+      body.description,
+    );
+  }
+
+  @Patch(':id/weights/set')
+  @ApiOperation({ summary: 'Set weights for battery tests' })
+  @ApiResponse({ status: 200, description: 'Weights set successfully' })
+  setWeights(
+    @Param('id') id: string,
+    @Body() dto: SetBatteryTestWeightsDto,
+  ): Promise<void> {
+    // Ensure all items target this battery
+    const items = (dto.items || []).map((i) => ({
+      batteryId: id,
+      testId: i.testId,
+      weight: i.weight,
+    }));
+    return this.batteryService.setBatteryTestWeights(items);
   }
 }

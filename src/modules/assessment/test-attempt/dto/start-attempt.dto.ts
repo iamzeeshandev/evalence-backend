@@ -9,6 +9,11 @@ export class StartAttemptDto {
   @ApiProperty()
   @IsUUID()
   userId: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  batteryId?: string;
 }
 
 export class ListAttemptsDto {

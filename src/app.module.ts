@@ -5,6 +5,9 @@ import { HomeModule } from './modules/home/home.module';
 import { CompaniesModule } from './modules/company/company.module';
 import { UsersModule } from './modules/user/user.module';
 import { GroupsModule } from './modules/groups/groups.module';
+import { BatteryAssignmentModule } from './modules/battery-assignment/battery-assignment.module';
+import { BatteryProgressModule } from './modules/battery-progress/battery-progress.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TypeOrmConfigService } from './database/typeorm-config.service';
 import { DataSource } from 'typeorm';
@@ -44,6 +47,9 @@ import { APP_GUARD } from '@nestjs/core';
     CompaniesModule,
     UsersModule,
     GroupsModule,
+    BatteryAssignmentModule,
+    BatteryProgressModule,
+    AnalyticsModule,
     TestModule,
     BatteryModule,
     QuestionModule,

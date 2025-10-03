@@ -3,13 +3,17 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToMany,
+  OneToMany,
   JoinTable,
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
+import { GroupUser } from './group-user.entity';
 import { Company } from '../../company/entities/company.entity';
+import { BatteryGroupAssignment } from '../../battery-assignment/entities/battery-group-assignment.entity';
+import { BatteryProgress } from '../../battery-progress/entities/battery-progress.entity';
 
 @Entity('groups')
 export class Group {
@@ -41,20 +45,15 @@ export class Group {
   })
   updatedAt: Date;
 
-  @ManyToMany(() => User, (user) => user.groups, { cascade: false })
-  @JoinTable({
-    name: 'group_users',
-    joinColumn: {
-      name: 'groupId',
-      referencedColumnName: 'id',
-    },
-    inverseJoinColumn: {
-      name: 'userId',
-      referencedColumnName: 'id',
-    },
-  })
-  users: User[];
+  @OneToMany(() => GroupUser, (gu) => gu.group)
+  groupUsers: GroupUser[];
 
   @ManyToOne(() => Company, (company) => company.groups)
   company: Company;
+
+  @OneToMany(() => BatteryGroupAssignment, (assignment) => assignment.group)
+  batteryAssignments: BatteryGroupAssignment[];
+
+  @OneToMany(() => BatteryProgress, (progress) => progress.group)
+  batteryProgress: BatteryProgress[];
 }

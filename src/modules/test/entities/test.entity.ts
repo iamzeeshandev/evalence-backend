@@ -1,6 +1,6 @@
 import { TestAttempt } from 'src/modules/assessment/test-attempt/entities/test-attempt.entity';
 import { Question } from 'src/modules/question/entities/question.entity';
-import { Battery } from 'src/modules/battery/entities/battery.entity';
+import { BatteryTest } from 'src/modules/battery/entities/battery-test.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -53,6 +53,6 @@ export class Test {
   @OneToMany(() => TestAttempt, (ta) => ta.test)
   testAttempts: TestAttempt[];
 
-  @ManyToMany(() => Battery, (battery) => battery.tests)
-  batteries: Battery[];
+  @OneToMany(() => BatteryTest, (bt) => bt.test)
+  batteryTests: BatteryTest[];
 }

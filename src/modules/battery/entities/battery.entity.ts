@@ -4,10 +4,14 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToMany,
+  OneToMany,
   JoinTable,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { BatteryGroupAssignment } from '../../battery-assignment/entities/battery-group-assignment.entity';
+import { BatteryProgress } from '../../battery-progress/entities/battery-progress.entity';
+import { BatteryTest } from './battery-test.entity';
 
 @Entity('batteries')
 export class Battery {
@@ -36,17 +40,12 @@ export class Battery {
   })
   updatedAt: Date;
 
-  @ManyToMany(() => Test, (test) => test.batteries, { cascade: false })
-  @JoinTable({
-    name: 'battery_tests',
-    joinColumn: {
-      name: 'batteryId',
-      referencedColumnName: 'id',
-    },
-    inverseJoinColumn: {
-      name: 'testId',
-      referencedColumnName: 'id',
-    },
-  })
-  tests: Test[];
+  @OneToMany(() => BatteryTest, (bt) => bt.battery)
+  batteryTests: BatteryTest[];
+
+  @OneToMany(() => BatteryGroupAssignment, (assignment) => assignment.battery)
+  groupAssignments: BatteryGroupAssignment[];
+
+  @OneToMany(() => BatteryProgress, (progress) => progress.battery)
+  progressRecords: BatteryProgress[];
 }

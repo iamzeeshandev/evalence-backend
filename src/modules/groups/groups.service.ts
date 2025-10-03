@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Group } from './entities/group.entity';
+import { GroupUser } from './entities/group-user.entity';
 import { User } from '../user/entities/user.entity';
 import { Company } from '../company/entities/company.entity';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -16,6 +17,8 @@ export class GroupService {
   constructor(
     @InjectRepository(Group)
     private readonly groupRepository: Repository<Group>,
+    @InjectRepository(GroupUser)
+    private readonly groupUserRepository: Repository<GroupUser>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(Company)
@@ -25,7 +28,7 @@ export class GroupService {
   async findAll(): Promise<Group[]> {
     return await this.groupRepository.find({
       where: { isDeleted: false },
-      relations: ['users', 'company'],
+      relations: ['groupUsers', 'groupUsers.user', 'company'],
       order: {
         createdAt: 'DESC',
       },
@@ -35,7 +38,7 @@ export class GroupService {
   async findOne(id: string): Promise<Group> {
     const group = await this.groupRepository.findOne({
       where: { id, isDeleted: false },
-      relations: ['users', 'company'],
+      relations: ['groupUsers', 'groupUsers.user', 'company'],
     });
     if (!group) {
       throw new NotFoundException(`Group with id ${id} not found`);
@@ -80,11 +83,23 @@ export class GroupService {
     const group = await this.groupRepository.create({
       ...groupData,
       company,
-      users,
     });
-    const result = await this.groupRepository.save(group);
+    const savedGroup = await this.groupRepository.save(group);
 
-    return result;
+    // Create GroupUser records for each user
+    if (userIds && userIds.length > 0) {
+      const groupUsers = userIds.map((userId) =>
+        this.groupUserRepository.create({
+          groupId: savedGroup.id,
+          userId,
+          isActive: true,
+          isDeleted: false,
+        }),
+      );
+      await this.groupUserRepository.save(groupUsers);
+    }
+
+    return this.findOne(savedGroup.id);
   }
 
   async update(id: string, updateGroupDto: UpdateGroupDto): Promise<Group> {
@@ -102,11 +117,14 @@ export class GroupService {
       group.company = company;
     }
 
-    // If userIds are being updated, verify users exist and belong to the company
+    // If userIds are being updated, update GroupUser records
     if (userIds !== undefined) {
-      let users: User[] = [];
+      // Remove existing GroupUser records
+      await this.groupUserRepository.delete({ groupId: id });
+
+      // Create new GroupUser records
       if (userIds.length > 0) {
-        users = await this.userRepository.find({
+        const users = await this.userRepository.find({
           where: { id: In(userIds), isDeleted: false },
           relations: ['company'],
         });
@@ -124,8 +142,17 @@ export class GroupService {
             'All users must belong to the same company as the group',
           );
         }
+
+        const groupUsers = userIds.map((userId) =>
+          this.groupUserRepository.create({
+            groupId: id,
+            userId,
+            isActive: true,
+            isDeleted: false,
+          }),
+        );
+        await this.groupUserRepository.save(groupUsers);
       }
-      group.users = users;
     }
 
     Object.assign(group, groupData);
@@ -151,7 +178,7 @@ export class GroupService {
   async getGroupsByCompany(companyId: string): Promise<Group[]> {
     return await this.groupRepository.find({
       where: { company: { id: companyId }, isDeleted: false },
-      relations: ['users'],
+      relations: ['groupUsers', 'groupUsers.user'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -178,22 +205,39 @@ export class GroupService {
       );
     }
 
-    // Add new users to existing users (avoid duplicates)
-    const existingUserIds = group.users.map((user) => user.id);
-    const newUsers = users.filter((user) => !existingUserIds.includes(user.id));
-    group.users = [...group.users, ...newUsers];
+    // Get existing GroupUser records to avoid duplicates
+    const existingGroupUsers = await this.groupUserRepository.find({
+      where: { groupId },
+    });
+    const existingUserIds = existingGroupUsers.map((gu) => gu.userId);
 
-    return this.groupRepository.save(group);
+    // Create GroupUser records for new users only
+    const newUserIds = userIds.filter((id) => !existingUserIds.includes(id));
+    if (newUserIds.length > 0) {
+      const groupUsers = newUserIds.map((userId) =>
+        this.groupUserRepository.create({
+          groupId,
+          userId,
+          isActive: true,
+          isDeleted: false,
+        }),
+      );
+      await this.groupUserRepository.save(groupUsers);
+    }
+
+    return this.findOne(groupId);
   }
 
   async removeUsersFromGroup(
     groupId: string,
     userIds: string[],
   ): Promise<Group> {
-    const group = await this.findOne(groupId);
+    // Remove GroupUser records
+    await this.groupUserRepository.delete({
+      groupId,
+      userId: In(userIds),
+    });
 
-    group.users = group.users.filter((user) => !userIds.includes(user.id));
-
-    return this.groupRepository.save(group);
+    return this.findOne(groupId);
   }
 }
