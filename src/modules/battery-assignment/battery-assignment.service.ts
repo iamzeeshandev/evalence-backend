@@ -269,7 +269,7 @@ export class BatteryAssignmentService {
         groupId,
         status: AssignmentStatus.ACTIVE,
       },
-      relations: ['battery', 'battery.batteryTests', 'battery.batteryTests.test'],
+      relations: ['battery', 'battery.batteryTests', 'battery.batteryTests.test', 'battery.batteryTests.test.questions'],
     });
 
     // Filter out expired assignments
@@ -279,6 +279,28 @@ export class BatteryAssignmentService {
     );
 
     return validAssignments.map((assignment) => assignment.battery);
+  }
+
+  async getUserAccessibleTests(userId: string): Promise<any[]> {
+    const accessibleBatteries = await this.getUserAccessibleBatteries(userId);
+    
+    // Flatten all tests from accessible batteries
+    const accessibleTests = [];
+    for (const battery of accessibleBatteries) {
+      if (battery.batteryTests) {
+        for (const batteryTest of battery.batteryTests) {
+          // Add the test with battery information
+          accessibleTests.push({
+            ...batteryTest.test,
+            batteryId: battery.id,
+            batteryName: battery.name,
+            weight: batteryTest.weight,
+          });
+        }
+      }
+    }
+    
+    return accessibleTests;
   }
 
   async validateUserBatteryAccess(

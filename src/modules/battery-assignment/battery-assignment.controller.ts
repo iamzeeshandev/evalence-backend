@@ -124,6 +124,14 @@ export class BatteryAssignmentController {
     return this.batteryAssignmentService.getUserAccessibleBatteries(userId);
   }
 
+  @Get('user/:userId/accessible-tests')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EMPLOYEE)
+  async getUserAccessibleTests(
+    @Param('userId') userId: string,
+  ): Promise<any[]> {
+    return this.batteryAssignmentService.getUserAccessibleTests(userId);
+  }
+
   @Get('stats')
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
   async getAssignmentStats() {
