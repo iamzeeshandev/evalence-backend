@@ -111,6 +111,29 @@ export class CompanyService {
     });
   }
 
+  async getDropdownListForUser(userRole: string, userCompanyId?: string): Promise<{ id: string; name: string }[]> {
+    // For super admins, return all companies
+    if (userRole === 'super_admin') {
+      return await this.companyRepository.find({
+        where: { isDeleted: false },
+        select: ['id', 'name'],
+        order: { name: 'ASC' },
+      });
+    }
+    
+    // For company admins, return only their own company
+    if (userRole === 'company_admin' && userCompanyId) {
+      return await this.companyRepository.find({
+        where: { id: userCompanyId, isDeleted: false },
+        select: ['id', 'name'],
+        order: { name: 'ASC' },
+      });
+    }
+    
+    // For other users, return empty array
+    return [];
+  }
+
   async update(
     id: string,
     updateCompanyDto: UpdateCompanyDto,
@@ -155,3 +178,5 @@ export class CompanyService {
     });
   }
 }
+
+
