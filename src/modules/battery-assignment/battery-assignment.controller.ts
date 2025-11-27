@@ -129,7 +129,7 @@ export class BatteryAssignmentController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EMPLOYEE)
   async getUserAccessibleTests(
     @Param('userId') userId: string,
-  ): Promise<Test[]> {
+  ): Promise<any[]> {
     return this.batteryAssignmentService.getUserAccessibleTests(userId);
   }
 

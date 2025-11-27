@@ -13,7 +13,7 @@ import {
 import { GroupService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
-import { Group } from './entities/group.entity';
+import { GroupResponseDto } from './dto/group-response.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -40,13 +40,13 @@ export class GroupController {
   @Post('save')
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createGroupDto: CreateGroupDto): Promise<Group> {
+  async create(@Body() createGroupDto: CreateGroupDto): Promise<GroupResponseDto> {
     return this.groupService.create(createGroupDto);
   }
 
   @Get('list')
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
-  async findAll(): Promise<Group[]> {
+  async findAll(): Promise<GroupResponseDto[]> {
     return this.groupService.findAll();
   }
 
@@ -58,7 +58,7 @@ export class GroupController {
 
   @Get(':id')
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
-  async findOne(@Param('id') id: string): Promise<Group> {
+  async findOne(@Param('id') id: string): Promise<GroupResponseDto> {
     return this.groupService.findOne(id);
   }
 
@@ -67,7 +67,7 @@ export class GroupController {
   async update(
     @Param('id') id: string,
     @Body() updateGroupDto: UpdateGroupDto,
-  ): Promise<Group> {
+  ): Promise<GroupResponseDto> {
     return this.groupService.update(id, updateGroupDto);
   }
 
@@ -82,7 +82,7 @@ export class GroupController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
   async getGroupsByCompany(
     @Param('companyId') companyId: string,
-  ): Promise<Group[]> {
+  ): Promise<GroupResponseDto[]> {
     return this.groupService.getGroupsByCompany(companyId);
   }
 
@@ -91,7 +91,7 @@ export class GroupController {
   async addUsersToGroup(
     @Param('id') groupId: string,
     @Body() body: { userIds: string[] },
-  ): Promise<Group> {
+  ): Promise<GroupResponseDto> {
     return this.groupService.addUsersToGroup(groupId, body.userIds);
   }
 
@@ -100,7 +100,7 @@ export class GroupController {
   async removeUsersFromGroup(
     @Param('id') groupId: string,
     @Body() body: { userIds: string[] },
-  ): Promise<Group> {
+  ): Promise<GroupResponseDto> {
     return this.groupService.removeUsersFromGroup(groupId, body.userIds);
   }
 }

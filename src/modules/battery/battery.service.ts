@@ -25,14 +25,14 @@ export class BatteryService {
   async findAll(): Promise<Battery[]> {
     return await this.batteryRepository.find({
       order: { createdAt: 'DESC' },
-      relations: ['batteryTests'],
+      relations: ['batteryTests', 'batteryTests.test', 'batteryTests.test.questions', 'batteryTests.test.questions.options'],
     });
   }
 
   async findOne(id: string): Promise<Battery> {
     const battery = await this.batteryRepository.findOne({
       where: { id },
-      relations: ['batteryTests', 'batteryTests.test'],
+      relations: ['batteryTests', 'batteryTests.test', 'batteryTests.test.questions', 'batteryTests.test.questions.options'],
     });
 
     if (!battery) {
@@ -98,7 +98,15 @@ export class BatteryService {
     id: string,
     updateBatteryDto: UpdateBatteryDto,
   ): Promise<Battery> {
-    const battery = await this.findOne(id);
+    // Load battery without relations to avoid cascade issues
+    const battery = await this.batteryRepository.findOne({
+      where: { id },
+    });
+    
+    if (!battery) {
+      throw new NotFoundException(`Battery with ID ${id} not found`);
+    }
+
     const { testIds, tests, ...batteryData } = updateBatteryDto;
 
     Object.assign(battery, batteryData);
@@ -186,50 +194,19 @@ export class BatteryService {
       throw new NotFoundException('One or more tests not found');
     }
 
-    // Get existing battery tests
-    const existingBatteryTests = await this.batteryTestRepository.find({
-      where: { batteryId },
-    });
+    // Delete all existing battery tests for this battery
+    await this.batteryTestRepository.delete({ batteryId });
 
-    // Create a map of existing tests for quick lookup
-    const existingMap = new Map(
-      existingBatteryTests.map((bt) => [bt.testId, bt] as const),
-    );
-
-    // Prepare all tests to save (both existing and new)
-    const testsToSave: BatteryTest[] = [];
-
-    for (const test of tests) {
-      const existing = existingMap.get(test.testId);
-      if (existing) {
-        // Update existing test weight
-        existing.weight = test.weight;
-        testsToSave.push(existing);
-      } else {
-        // Create new test association
-        testsToSave.push(
-          this.batteryTestRepository.create({
-            batteryId,
-            testId: test.testId,
-            weight: test.weight,
-          }),
-        );
-      }
-    }
-
-    // Remove tests that are no longer in the list
-    const newTestIds = new Set(tests.map((t) => t.testId));
-    const toRemove = existingBatteryTests.filter(
-      (bt) => !newTestIds.has(bt.testId),
-    );
-
-    if (toRemove.length > 0) {
-      await this.batteryTestRepository.remove(toRemove);
-    }
-
-    // Save all tests (both updated and new)
-    if (testsToSave.length > 0) {
-      await this.batteryTestRepository.save(testsToSave);
+    // Create new battery test records
+    if (tests.length > 0) {
+      const rows = tests.map((test) =>
+        this.batteryTestRepository.create({
+          batteryId,
+          testId: test.testId,
+          weight: test.weight,
+        }),
+      );
+      await this.batteryTestRepository.save(rows);
     }
 
     return await this.findOne(batteryId);
@@ -254,46 +231,19 @@ export class BatteryService {
       throw new NotFoundException('One or more tests not found');
     }
 
-    // Get existing battery tests
-    const existingBatteryTests = await this.batteryTestRepository.find({
-      where: { batteryId },
-    });
+    // Delete all existing battery tests for this battery
+    await this.batteryTestRepository.delete({ batteryId });
 
-    // Create a map of existing tests for quick lookup
-    const existingMap = new Map(
-      existingBatteryTests.map((bt) => [bt.testId, bt] as const),
-    );
-
-    // Prepare tests to save (remaining tests with updated weights)
-    const testsToSave: BatteryTest[] = [];
-
-    for (const test of tests) {
-      const existing = existingMap.get(test.testId);
-      if (existing) {
-        // Update existing test weight
-        existing.weight = test.weight;
-        testsToSave.push(existing);
-      } else {
-        // This shouldn't happen if validation is correct, but handle gracefully
-        throw new BadRequestException(
-          `Test ${test.testId} is not currently in the battery`,
-        );
-      }
-    }
-
-    // Remove tests that are no longer in the list
-    const remainingTestIds = new Set(tests.map((t) => t.testId));
-    const toRemove = existingBatteryTests.filter(
-      (bt) => !remainingTestIds.has(bt.testId),
-    );
-
-    if (toRemove.length > 0) {
-      await this.batteryTestRepository.remove(toRemove);
-    }
-
-    // Save remaining tests with updated weights
-    if (testsToSave.length > 0) {
-      await this.batteryTestRepository.save(testsToSave);
+    // Create new battery test records
+    if (tests.length > 0) {
+      const rows = tests.map((test) =>
+        this.batteryTestRepository.create({
+          batteryId,
+          testId: test.testId,
+          weight: test.weight,
+        }),
+      );
+      await this.batteryTestRepository.save(rows);
     }
 
     return await this.findOne(batteryId);
@@ -348,15 +298,14 @@ export class BatteryService {
       where: { batteryId: originalBattery.id },
     });
     if (originalBT.length > 0) {
-      await this.batteryTestRepository.save(
-        originalBT.map((bt) =>
-          this.batteryTestRepository.create({
-            batteryId: newBattery.id,
-            testId: bt.testId,
-            weight: bt.weight,
-          }),
-        ),
+      const rows = originalBT.map((bt) =>
+        this.batteryTestRepository.create({
+          batteryId: newBattery.id,
+          testId: bt.testId,
+          weight: bt.weight,
+        }),
       );
+      await this.batteryTestRepository.save(rows);
     }
 
     return await this.findOne(newBattery.id);
@@ -366,6 +315,8 @@ export class BatteryService {
     items: { batteryId: string; testId: string; weight: number }[],
   ): Promise<void> {
     if (!items || items.length === 0) return;
+    
+    // Group items by batteryId
     const byBattery = new Map<string, { testId: string; weight: number }[]>();
     for (const item of items) {
       const arr = byBattery.get(item.batteryId) || [];
@@ -373,24 +324,36 @@ export class BatteryService {
       byBattery.set(item.batteryId, arr);
     }
 
+    // Process each battery
     for (const [batteryId, arr] of byBattery.entries()) {
-      // Ensure associations exist
-      const testIds = arr.map((a) => a.testId);
-      const existing = await this.batteryTestRepository.find({
-        where: { batteryId },
-      });
-      const existingMap = new Map(existing.map((e) => [e.testId, e] as const));
-
-      const rowsToSave: BatteryTest[] = [];
-      for (const a of arr) {
-        const row =
-          existingMap.get(a.testId) ||
-          this.batteryTestRepository.create({ batteryId, testId: a.testId });
-        row.weight = Number(a.weight);
-        rowsToSave.push(row);
+      // Delete all existing battery tests for this battery
+      await this.batteryTestRepository.delete({ batteryId });
+      
+      // Validate that weights sum to 100
+      const totalWeight = arr.reduce((sum, item) => sum + item.weight, 0);
+      if (totalWeight !== 100) {
+        throw new BadRequestException(
+          `Sum of test weights must equal 100, got ${totalWeight}`,
+        );
       }
-      if (rowsToSave.length > 0)
-        await this.batteryTestRepository.save(rowsToSave);
+      
+      // Create new battery test records
+      if (arr.length > 0) {
+        const testIds = arr.map((item) => item.testId);
+        const existingTests = await this.testRepository.findByIds(testIds);
+        if (existingTests.length !== testIds.length) {
+          throw new NotFoundException('One or more tests not found');
+        }
+        
+        const rows = arr.map((item) =>
+          this.batteryTestRepository.create({
+            batteryId,
+            testId: item.testId,
+            weight: item.weight,
+          }),
+        );
+        await this.batteryTestRepository.save(rows);
+      }
     }
   }
 }

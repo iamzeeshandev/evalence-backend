@@ -13,7 +13,7 @@ export class StartAttemptDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
-  batteryId?: string;
+  batteryId?: string | null;
 }
 
 export class ListAttemptsDto {

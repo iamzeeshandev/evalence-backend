@@ -272,11 +272,7 @@ export class BatteryAssignmentService {
         groupId,
         status: AssignmentStatus.ACTIVE,
       },
-      relations: [
-        'battery',
-        'battery.batteryTests',
-        'battery.batteryTests.test',
-      ],
+      relations: ['battery', 'battery.batteryTests', 'battery.batteryTests.test', 'battery.batteryTests.test.questions', 'battery.batteryTests.test.questions.options'],
     });
 
     // Filter out expired assignments
@@ -288,46 +284,34 @@ export class BatteryAssignmentService {
     return validAssignments.map((assignment) => assignment.battery);
   }
 
+  async getUserAccessibleTests(userId: string): Promise<any[]> {
+    const accessibleBatteries = await this.getUserAccessibleBatteries(userId);
+    
+    // Flatten all tests from accessible batteries
+    const accessibleTests = [];
+    for (const battery of accessibleBatteries) {
+      if (battery.batteryTests) {
+        for (const batteryTest of battery.batteryTests) {
+          // Add the test with battery information
+          accessibleTests.push({
+            ...batteryTest.test,
+            batteryId: battery.id,
+            batteryName: battery.name,
+            weight: batteryTest.weight,
+          });
+        }
+      }
+    }
+    
+    return accessibleTests;
+  }
+
   async validateUserBatteryAccess(
     userId: string,
     batteryId: string,
   ): Promise<boolean> {
     const accessibleBatteries = await this.getUserAccessibleBatteries(userId);
     return accessibleBatteries.some((battery) => battery.id === batteryId);
-  }
-
-  async getUserAccessibleTests(userId: string): Promise<Test[]> {
-    // Get all accessible batteries for the user
-    const accessibleBatteries = await this.getUserAccessibleBatteries(userId);
-
-    // Extract unique test IDs from all batteries
-    const testIdsSet = new Set<string>();
-    for (const battery of accessibleBatteries) {
-      if (battery.batteryTests && battery.batteryTests.length > 0) {
-        for (const batteryTest of battery.batteryTests) {
-          testIdsSet.add(batteryTest.testId);
-        }
-      }
-    }
-
-    // If no tests found, return empty array
-    if (testIdsSet.size === 0) {
-      return [];
-    }
-
-    // Fetch all unique tests with their relations
-    const uniqueTestIds = Array.from(testIdsSet);
-    const tests = await this.testRepository.find({
-      where: {
-        id: In(uniqueTestIds),
-      },
-      relations: ['questions', 'questions.options'],
-      order: {
-        createdAt: 'DESC',
-      },
-    });
-
-    return tests;
   }
 
   async validateUserTestAccess(

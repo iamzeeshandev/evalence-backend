@@ -11,6 +11,7 @@ import { User } from '../user/entities/user.entity';
 import { Company } from '../company/entities/company.entity';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
+import { GroupResponseDto, GroupUserDto, CompanyDto } from './dto/group-response.dto';
 
 @Injectable()
 export class GroupService {
@@ -25,17 +26,20 @@ export class GroupService {
     private readonly companyRepository: Repository<Company>,
   ) {}
 
-  async findAll(): Promise<Group[]> {
-    return await this.groupRepository.find({
+  async findAll(): Promise<GroupResponseDto[]> {
+    const groups = await this.groupRepository.find({
       where: { isDeleted: false },
       relations: ['groupUsers', 'groupUsers.user', 'company'],
       order: {
         createdAt: 'DESC',
       },
     });
+    
+    // Transform to GroupResponseDto
+    return groups.map(group => this.transformToGroupResponseDto(group));
   }
 
-  async findOne(id: string): Promise<Group> {
+  async findOne(id: string): Promise<GroupResponseDto> {
     const group = await this.groupRepository.findOne({
       where: { id, isDeleted: false },
       relations: ['groupUsers', 'groupUsers.user', 'company'],
@@ -43,10 +47,11 @@ export class GroupService {
     if (!group) {
       throw new NotFoundException(`Group with id ${id} not found`);
     }
-    return group;
+    
+    return this.transformToGroupResponseDto(group);
   }
 
-  async create(createGroupDto: CreateGroupDto): Promise<Group> {
+  async create(createGroupDto: CreateGroupDto): Promise<GroupResponseDto> {
     const { userIds, companyId, ...groupData } = createGroupDto;
 
     // Verify company exists
@@ -71,7 +76,7 @@ export class GroupService {
 
       // Check if all users belong to the same company
       const invalidUsers = users.filter(
-        (user) => user.company.id !== companyId,
+        (user) => user.company && user.company.id !== companyId,
       );
       if (invalidUsers.length > 0) {
         throw new BadRequestException(
@@ -80,7 +85,7 @@ export class GroupService {
       }
     }
 
-    const group = await this.groupRepository.create({
+    const group = this.groupRepository.create({
       ...groupData,
       company,
     });
@@ -99,22 +104,37 @@ export class GroupService {
       await this.groupUserRepository.save(groupUsers);
     }
 
-    return this.findOne(savedGroup.id);
+    // Load the complete group with relations for response
+    const completeGroup = await this.groupRepository.findOne({
+      where: { id: savedGroup.id, isDeleted: false },
+      relations: ['groupUsers', 'groupUsers.user', 'company'],
+    });
+
+    return this.transformToGroupResponseDto(completeGroup!);
   }
 
-  async update(id: string, updateGroupDto: UpdateGroupDto): Promise<Group> {
-    const group = await this.findOne(id);
+  async update(id: string, updateGroupDto: UpdateGroupDto): Promise<GroupResponseDto> {
+    // Load the existing group with relations for update
+    const existingGroup = await this.groupRepository.findOne({
+      where: { id, isDeleted: false },
+      relations: ['groupUsers', 'groupUsers.user', 'company'],
+    });
+    
+    if (!existingGroup) {
+      throw new NotFoundException(`Group with id ${id} not found`);
+    }
+
     const { userIds, companyId, ...groupData } = updateGroupDto;
 
     // If companyId is being updated, verify the new company exists
-    if (companyId && companyId !== group.company.id) {
+    if (companyId && existingGroup.company && companyId !== existingGroup.company.id) {
       const company = await this.companyRepository.findOne({
         where: { id: companyId, isDeleted: false },
       });
       if (!company) {
         throw new NotFoundException(`Company with id ${companyId} not found`);
       }
-      group.company = company;
+      existingGroup.company = company;
     }
 
     // If userIds are being updated, update GroupUser records
@@ -135,7 +155,7 @@ export class GroupService {
 
         // Check if all users belong to the group's company
         const invalidUsers = users.filter(
-          (user) => user.company.id !== group.company.id,
+          (user) => existingGroup.company && user.company && user.company.id !== existingGroup.company.id,
         );
         if (invalidUsers.length > 0) {
           throw new BadRequestException(
@@ -155,12 +175,26 @@ export class GroupService {
       }
     }
 
-    Object.assign(group, groupData);
-    return this.groupRepository.save(group);
+    Object.assign(existingGroup, groupData);
+    await this.groupRepository.save(existingGroup);
+    
+    // Load the updated group with relations for response
+    const updatedGroup = await this.groupRepository.findOne({
+      where: { id, isDeleted: false },
+      relations: ['groupUsers', 'groupUsers.user', 'company'],
+    });
+
+    return this.transformToGroupResponseDto(updatedGroup!);
   }
 
   async softDelete(id: string): Promise<void> {
-    const group = await this.findOne(id);
+    const group = await this.groupRepository.findOne({
+      where: { id, isDeleted: false },
+    });
+    
+    if (!group) {
+      throw new NotFoundException(`Group with id ${id} not found`);
+    }
 
     await this.groupRepository.update(id, {
       isDeleted: true,
@@ -175,16 +209,25 @@ export class GroupService {
     });
   }
 
-  async getGroupsByCompany(companyId: string): Promise<Group[]> {
-    return await this.groupRepository.find({
+  async getGroupsByCompany(companyId: string): Promise<GroupResponseDto[]> {
+    const groups = await this.groupRepository.find({
       where: { company: { id: companyId }, isDeleted: false },
       relations: ['groupUsers', 'groupUsers.user'],
       order: { createdAt: 'DESC' },
     });
+    
+    return groups.map(group => this.transformToGroupResponseDto(group));
   }
 
-  async addUsersToGroup(groupId: string, userIds: string[]): Promise<Group> {
-    const group = await this.findOne(groupId);
+  async addUsersToGroup(groupId: string, userIds: string[]): Promise<GroupResponseDto> {
+    const group = await this.groupRepository.findOne({
+      where: { id: groupId, isDeleted: false },
+      relations: ['company'],
+    });
+    
+    if (!group) {
+      throw new NotFoundException(`Group with id ${groupId} not found`);
+    }
 
     const users = await this.userRepository.find({
       where: { id: In(userIds), isDeleted: false },
@@ -197,7 +240,7 @@ export class GroupService {
 
     // Check if all users belong to the group's company
     const invalidUsers = users.filter(
-      (user) => user.company.id !== group.company.id,
+      (user) => group.company && user.company && user.company.id !== group.company.id,
     );
     if (invalidUsers.length > 0) {
       throw new BadRequestException(
@@ -225,19 +268,82 @@ export class GroupService {
       await this.groupUserRepository.save(groupUsers);
     }
 
-    return this.findOne(groupId);
+    // Load the updated group with relations for response
+    const updatedGroup = await this.groupRepository.findOne({
+      where: { id: groupId, isDeleted: false },
+      relations: ['groupUsers', 'groupUsers.user', 'company'],
+    });
+
+    return this.transformToGroupResponseDto(updatedGroup!);
   }
 
   async removeUsersFromGroup(
     groupId: string,
     userIds: string[],
-  ): Promise<Group> {
+  ): Promise<GroupResponseDto> {
     // Remove GroupUser records
     await this.groupUserRepository.delete({
       groupId,
       userId: In(userIds),
     });
 
-    return this.findOne(groupId);
+    // Load the updated group with relations for response
+    const updatedGroup = await this.groupRepository.findOne({
+      where: { id: groupId, isDeleted: false },
+      relations: ['groupUsers', 'groupUsers.user', 'company'],
+    });
+
+    return this.transformToGroupResponseDto(updatedGroup!);
+  }
+
+  private transformToGroupResponseDto(group: Group): GroupResponseDto {
+    const users: GroupUserDto[] = group.groupUsers?.map(gu => ({
+      id: gu.user.id,
+      firstName: gu.user.firstName,
+      lastName: gu.user.lastName,
+      email: gu.user.email,
+      role: gu.user.role,
+      phone: gu.user.phone,
+      isActive: gu.user.isActive,
+      isDeleted: gu.user.isDeleted,
+      createdAt: gu.user.createdAt,
+      updatedAt: gu.user.updatedAt,
+      lastLoginAt: gu.user.lastLoginAt,
+    })) || [];
+
+    let companyDto: CompanyDto | undefined;
+    if (group.company) {
+      companyDto = {
+        id: group.company.id,
+        name: group.company.name,
+        description: group.company.description,
+        email: group.company.email,
+        phone: group.company.phone,
+        address: group.company.address,
+        city: group.company.city,
+        state: group.company.state,
+        country: group.company.country,
+        postalCode: group.company.postalCode,
+        website: group.company.website,
+        industry: group.company.industry,
+        size: group.company.size,
+        status: group.company.status,
+        isDeleted: group.company.isDeleted,
+        createdAt: group.company.createdAt,
+        updatedAt: group.company.updatedAt,
+      };
+    }
+
+    return {
+      id: group.id,
+      name: group.name,
+      description: group.description,
+      isActive: group.isActive,
+      isDeleted: group.isDeleted,
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt,
+      users,
+      company: companyDto,
+    };
   }
 }
