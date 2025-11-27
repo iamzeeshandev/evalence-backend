@@ -18,7 +18,6 @@ import { BatteryModule } from '../battery/battery.module';
 import { BatteryAssignmentModule } from '../battery-assignment/battery-assignment.module'; // Import BatteryAssignmentModule
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Test, Question, Option])],
   imports: [
     TypeOrmModule.forFeature([
       Test, 
@@ -27,16 +26,16 @@ import { BatteryAssignmentModule } from '../battery-assignment/battery-assignmen
       BatteryTest, 
       User, 
       GroupUser, 
-      Group
+      Group,
+      Question,
+      Option,
     ]),
     GroupsModule,
     BatteryModule,
     BatteryAssignmentModule // Add BatteryAssignmentModule
   ],
   controllers: [TestController],
-  providers: [TestService, PsychometricScoringService],
+  providers: [TestService, PsychometricScoringService, BatteryAssignmentService],
   exports: [TestService, PsychometricScoringService],
-  providers: [TestService, BatteryAssignmentService],
-  exports: [TestService],
 })
 export class TestModule {}
