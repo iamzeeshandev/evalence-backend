@@ -30,7 +30,7 @@ export class TestService {
   async findOne(id: string): Promise<Test> {
     const test = await this.testRepository.findOne({
       where: { id },
-      relations: ['questions', 'questions.options'],
+      relations: ['questions', 'questions.options', 'batteryTests'],
     });
 
     if (!test) {
@@ -63,7 +63,7 @@ export class TestService {
   async getActiveTestWithQuestions(testId: string) {
     const test = await this.testRepository.findOne({
       where: { id: testId },
-      relations: ['questions', 'questions.options'],
+      relations: ['questions', 'questions.options', 'batteryTests'],
     });
     if (!test) throw new NotFoundException('Test not found');
     const now = new Date();

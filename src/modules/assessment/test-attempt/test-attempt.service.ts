@@ -100,6 +100,7 @@ export class TestAttemptService {
       startedAt: new Date(),
       questionCount: 2,
     });
+    
     return this.repo.save(attempt);
   }
 

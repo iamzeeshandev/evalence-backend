@@ -269,7 +269,7 @@ export class BatteryAssignmentService {
         groupId,
         status: AssignmentStatus.ACTIVE,
       },
-      relations: ['battery', 'battery.batteryTests', 'battery.batteryTests.test', 'battery.batteryTests.test.questions'],
+      relations: ['battery', 'battery.batteryTests', 'battery.batteryTests.test', 'battery.batteryTests.test.questions', 'battery.batteryTests.test.questions.options'],
     });
 
     // Filter out expired assignments

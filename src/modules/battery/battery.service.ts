@@ -25,14 +25,14 @@ export class BatteryService {
   async findAll(): Promise<Battery[]> {
     return await this.batteryRepository.find({
       order: { createdAt: 'DESC' },
-      relations: ['batteryTests'],
+      relations: ['batteryTests', 'batteryTests.test', 'batteryTests.test.questions', 'batteryTests.test.questions.options'],
     });
   }
 
   async findOne(id: string): Promise<Battery> {
     const battery = await this.batteryRepository.findOne({
       where: { id },
-      relations: ['batteryTests', 'batteryTests.test'],
+      relations: ['batteryTests', 'batteryTests.test', 'batteryTests.test.questions', 'batteryTests.test.questions.options'],
     });
 
     if (!battery) {

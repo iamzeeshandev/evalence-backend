@@ -27,7 +27,7 @@ export class TestAttempt {
   userId: string;
 
   @Column('uuid', { nullable: true })
-  batteryId: string;
+  batteryId: string | null;
 
   @Column({
     type: 'enum',
