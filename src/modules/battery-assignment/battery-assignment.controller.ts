@@ -20,6 +20,7 @@ import {
   AssignBatteryToMultipleGroupsDto,
 } from './dto/battery-assignment.dto';
 import { Battery } from '../battery/entities/battery.entity';
+import { Test } from '../test/entities/test.entity';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -122,6 +123,14 @@ export class BatteryAssignmentController {
     @Param('userId') userId: string,
   ): Promise<Battery[]> {
     return this.batteryAssignmentService.getUserAccessibleBatteries(userId);
+  }
+
+  @Get('user/:userId/accessible-tests')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EMPLOYEE)
+  async getUserAccessibleTests(
+    @Param('userId') userId: string,
+  ): Promise<Test[]> {
+    return this.batteryAssignmentService.getUserAccessibleTests(userId);
   }
 
   @Get('stats')

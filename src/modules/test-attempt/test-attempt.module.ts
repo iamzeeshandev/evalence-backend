@@ -8,6 +8,7 @@ import { User } from '../user/entities/user.entity';
 import { TestAttempt } from './entities/test-attempt.entity';
 import { UserAnswer } from './entities/user-answer.entity';
 import { Option } from '../option/entities/option.entity';
+import { TestModule } from '../test/test.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { Option } from '../option/entities/option.entity';
       Question,
       Option,
     ]),
+    TestModule,
   ],
   controllers: [TestAttemptController],
   providers: [TestAttemptService],

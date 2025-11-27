@@ -5,7 +5,8 @@ import {
   SubmitAnswerDto,
   SubmitTestDto,
 } from './dto/create-test-attempt.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { SubmitPsychometricTestDto } from './dto/submit-psychometric-test.dto';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('TestAttempt')
 @Controller('test-attempt')
@@ -72,4 +73,14 @@ export class TestAttemptController {
   // remove(@Param("id") id: string) {
   //   return this.testAttemptService.remove(+id);
   // }
+
+  @Post('psychometric/submit')
+  @ApiOperation({ summary: 'Submit psychometric test' })
+  @ApiResponse({
+    status: 200,
+    description: 'Psychometric test submitted successfully',
+  })
+  async submitPsychometricTest(@Body() dto: SubmitPsychometricTestDto) {
+    return this.testAttemptService.submitPsychometricTest(dto);
+  }
 }

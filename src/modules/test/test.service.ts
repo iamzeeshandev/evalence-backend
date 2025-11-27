@@ -8,12 +8,14 @@ import { Repository } from 'typeorm';
 import { Test } from '../test/entities/test.entity';
 import { CreateTestDto } from '../test/dto/create-test-dto';
 import { UpdateTestDto } from '../test/dto/update-test-dto';
+import { PsychometricScoringService } from './services/psychometric-scoring.service';
 
 @Injectable()
 export class TestService {
   constructor(
     @InjectRepository(Test)
     private testRepository: Repository<Test>,
+    private psychometricScoringService: PsychometricScoringService,
   ) {}
 
   async findAll(): Promise<Test[]> {
@@ -44,13 +46,33 @@ export class TestService {
     const { questions } = createTestDto;
     console.log('Creating test with questions:', { questions });
     const test = this.testRepository.create(createTestDto);
-    return await this.testRepository.save(test);
+    const savedTest = await this.testRepository.save(test);
+
+    // Validate psychometric test structure if applicable
+    if (savedTest.testCategory === 'PSYCHOMETRIC') {
+      const testWithRelations = await this.findOne(savedTest.id);
+      await this.psychometricScoringService.validatePsychometricTest(
+        testWithRelations,
+      );
+    }
+
+    return savedTest;
   }
 
   async update(id: string, updateTestDto: UpdateTestDto): Promise<Test> {
     const test = await this.findOne(id);
     Object.assign(test, updateTestDto);
-    return await this.testRepository.save(test);
+    const updatedTest = await this.testRepository.save(test);
+
+    // Validate psychometric test structure if applicable
+    if (updatedTest.testCategory === 'PSYCHOMETRIC') {
+      const testWithRelations = await this.findOne(updatedTest.id);
+      await this.psychometricScoringService.validatePsychometricTest(
+        testWithRelations,
+      );
+    }
+
+    return updatedTest;
   }
 
   async remove(id: string): Promise<void> {

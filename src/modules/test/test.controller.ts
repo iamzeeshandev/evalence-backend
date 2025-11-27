@@ -26,7 +26,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 export class TestController {
   constructor(private readonly testService: TestService) {}
   @Get('list')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EMPLOYEE)
   findAll(): Promise<Test[]> {
     return this.testService.findAll();
   }
@@ -38,7 +38,7 @@ export class TestController {
   }
 
   @Post('save')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EMPLOYEE)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createTestDto: CreateTestDto): Promise<Test> {
     return this.testService.create(createTestDto);

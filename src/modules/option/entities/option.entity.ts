@@ -19,6 +19,9 @@ export class Option {
   @Column({ default: false })
   isCorrect: boolean;
 
+  @Column({ type: 'int', nullable: true })
+  scoringValue: number;
+
   @Column({ type: 'varchar', length: 500, nullable: true })
   imageUrl: string;
 

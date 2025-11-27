@@ -17,6 +17,11 @@ import { TestAttempt } from './entities/test-attempt.entity';
 import { UserAnswer } from './entities/user-answer.entity';
 import { Test } from '../test/entities/test.entity';
 import { Option } from '../option/entities/option.entity';
+import { PsychometricScoringService } from '../test/services/psychometric-scoring.service';
+import {
+  SubmitPsychometricTestDto,
+  PsychometricScoreResponseDto,
+} from './dto/submit-psychometric-test.dto';
 
 @Injectable()
 export class TestAttemptService {
@@ -33,6 +38,7 @@ export class TestAttemptService {
     private readonly questionRepository: Repository<Question>,
     @InjectRepository(Option)
     private readonly optionRepository: Repository<Option>,
+    private readonly psychometricScoringService: PsychometricScoringService,
   ) {}
   async startAttempt(dto: CreateTestAttemptDto): Promise<TestAttempt> {
     const user = await this.userRepository.findOne({
@@ -199,4 +205,73 @@ export class TestAttemptService {
   // remove(id: number) {
   //   return `This action removes a #${id} testAttempt`;
   // }
+
+  /**
+   * Submit psychometric test and calculate scores
+   */
+  async submitPsychometricTest(
+    dto: SubmitPsychometricTestDto,
+  ): Promise<PsychometricScoreResponseDto> {
+    // Verify user exists
+    const user = await this.userRepository.findOne({
+      where: { id: dto.userId },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Verify test exists and is psychometric
+    const test = await this.testRepository.findOne({
+      where: { id: dto.testId },
+      relations: ['questions', 'questions.options'],
+    });
+    if (!test) {
+      throw new NotFoundException('Test not found');
+    }
+    if (test.testCategory !== 'PSYCHOMETRIC') {
+      throw new BadRequestException('This is not a psychometric test');
+    }
+
+    // Calculate psychometric score
+    const scoreResult =
+      await this.psychometricScoringService.calculatePsychometricScore(
+        dto.testId,
+        dto.answers,
+      );
+
+    // Create test attempt record
+    const testAttempt = this.testAttemptRepository.create({
+      user,
+      test,
+      score: scoreResult.totalScore,
+      totalPoints: scoreResult.maxPossibleScore,
+      isCompleted: true,
+      startedAt: new Date(),
+      completedAt: new Date(),
+    });
+    const savedAttempt = await this.testAttemptRepository.save(testAttempt);
+
+    // Save user answers
+    const userAnswers = dto.answers.map((answer) => {
+      const question = test.questions.find((q) => q.id === answer.questionId);
+      const option = question?.options.find((o) => o.id === answer.optionId);
+
+      return this.answerRepository.create({
+        attempt: savedAttempt,
+        question,
+        selectedOption: option,
+        isCorrect: false, // Not applicable for psychometric tests
+      });
+    });
+    await this.answerRepository.save(userAnswers);
+
+    return {
+      attemptId: savedAttempt.id,
+      totalScore: scoreResult.totalScore,
+      maxPossibleScore: scoreResult.maxPossibleScore,
+      percentage: scoreResult.percentage,
+      dimensionScores: scoreResult.dimensionScores,
+      completedAt: savedAttempt.completedAt,
+    };
+  }
 }
