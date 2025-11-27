@@ -1,6 +1,7 @@
 import { TestAttempt } from 'src/modules/assessment/test-attempt/entities/test-attempt.entity';
 import { Question } from 'src/modules/question/entities/question.entity';
 import { BatteryTest } from 'src/modules/battery/entities/battery-test.entity';
+import { ScoringStandard } from 'src/enums/question.enum';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -24,6 +25,20 @@ export class Test {
 
   @Column({ type: 'int', default: 60 })
   duration: number;
+
+  @Column({
+    type: 'enum',
+    enum: ['STANDARD', 'PSYCHOMETRIC'],
+    default: 'STANDARD',
+  })
+  testCategory: 'STANDARD' | 'PSYCHOMETRIC';
+
+  @Column({
+    type: 'enum',
+    enum: ScoringStandard,
+    nullable: true,
+  })
+  scoringStandard: ScoringStandard;
 
   @Column({ type: 'datetime', nullable: true })
   startDate: Date;

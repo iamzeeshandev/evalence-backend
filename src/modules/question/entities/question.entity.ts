@@ -1,4 +1,4 @@
-import { QuestionType } from 'src/enums/question.enum';
+import { QuestionType, QuestionOrientation } from 'src/enums/question.enum';
 import { Option } from 'src/modules/option/entities/option.entity';
 import { Test } from 'src/modules/test/entities/test.entity';
 import {
@@ -29,6 +29,16 @@ export class Question {
 
   @Column({ type: 'varchar', nullable: true })
   imageUrl: string;
+
+  @Column({
+    type: 'enum',
+    enum: QuestionOrientation,
+    nullable: true,
+  })
+  questionOrientation: QuestionOrientation;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  dimension: string;
 
   @CreateDateColumn({
     type: 'timestamp',

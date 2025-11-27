@@ -33,7 +33,7 @@ export class TestController {
     private readonly batteryAssignmentService: BatteryAssignmentService,
   ) {}
   @Get('list')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EMPLOYEE)
   findAll(): Promise<Test[]> {
     return this.testService.findAll();
   }
@@ -65,7 +65,7 @@ export class TestController {
   }
 
   @Post('save')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EMPLOYEE)
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createTestDto: CreateTestDto): Promise<Test> {
     return this.testService.create(createTestDto);

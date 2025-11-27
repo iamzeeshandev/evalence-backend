@@ -20,6 +20,7 @@ import {
   AssignBatteryToMultipleGroupsDto,
 } from './dto/battery-assignment.dto';
 import { Battery } from '../battery/entities/battery.entity';
+import { Test } from '../test/entities/test.entity';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
